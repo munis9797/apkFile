@@ -2,12 +2,14 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const User = require('./models/User'); // Assuming User model is defined elsewhere
+require('dotenv').config(); // Import and configure dotenv
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-mongoose.connect('mongodb+srv://maxmudibragimov19771908:PjZDIr1LX1ZGDh6a@cluster0.ffsgcdb.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0')
+// Use the MONGO_URI environment variable
+mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('Connected to MongoDB'))
   .catch((error) => console.error('Error connecting to MongoDB:', error));
 
@@ -28,7 +30,7 @@ app.post('/register', async (req, res) => {
     res.status(500).send({ success: false, message: 'Server error', error: error.message });
   }
 });
-  
+
 app.post('/login', async (req, res) => {
   const { username, password } = req.body;
   try {
@@ -45,7 +47,7 @@ app.post('/login', async (req, res) => {
     res.status(500).send({ success: false, message: 'Login failed Server error', error: error.message });
   }
 });
-  
+
 // Define Item Schema and Model
 const ItemSchema = new mongoose.Schema({
   name: { type: String, required: true },
@@ -124,6 +126,7 @@ app.delete('/items/:_id', async (req, res) => {
   }
 });
 
-app.listen(5000, () => {
-  console.log('Server running on port 5000');
+// Use the PORT environment variable
+app.listen(process.env.PORT, () => {
+  console.log(`Server running on port ${process.env.PORT}`);
 });
