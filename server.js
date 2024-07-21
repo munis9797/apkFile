@@ -11,39 +11,40 @@ mongoose.connect('mongodb+srv://maxmudibragimov19771908:PjZDIr1LX1ZGDh6a@cluster
   .then(() => console.log('Connected to MongoDB'))
   .catch((error) => console.error('Error connecting to MongoDB:', error));
 
+// Existing routes...
 
-  app.post('/register', async (req, res) => {
-    const { username, password } = req.body;
-    try {
-      const existingUser = await User.findOne({ username });
-      if (existingUser) {
-        return res.status(400).send({ success: false, message: 'Username already exists' });
-      }
-      const user = new User({ username, password });
-      await user.save();
-      res.status(201).send({ success: true, message: 'User registered successfully' });
-    } catch (error) {
-      console.error('Error during registration:', error);
-      res.status(500).send({ success: false, message: 'Server error', error: error.message });
+app.post('/register', async (req, res) => {
+  const { username, password } = req.body;
+  try {
+    const existingUser = await User.findOne({ username });
+    if (existingUser) {
+      return res.status(400).send({ success: false, message: 'Username already exists' });
     }
-  });
+    const user = new User({ username, password });
+    await user.save();
+    res.status(201).send({ success: true, message: 'User registered successfully' });
+  } catch (error) {
+    console.error('Error during registration:', error);
+    res.status(500).send({ success: false, message: 'Server error', error: error.message });
+  }
+});
   
-  app.post('/login', async (req, res) => {
-    const { username, password } = req.body;
-    try {
-      console.log('Received login request for username:', username);
-      const user = await User.findOne({ username });
-      console.log('User found:', user);
-      if (user && user.password === password) {
-        res.send({ success: true });
-      } else {
-        res.status(401).send({ success: false, message: 'Invalid credentials' });
-      }
-    } catch (error) {
-      console.error('Error during login:', error);
-      res.status(500).send({ success: false, message: 'Login failed Server error', error: error.message });
+app.post('/login', async (req, res) => {
+  const { username, password } = req.body;
+  try {
+    console.log('Received login request for username:', username);
+    const user = await User.findOne({ username });
+    console.log('User found:', user);
+    if (user && user.password === password) {
+      res.send({ success: true });
+    } else {
+      res.status(401).send({ success: false, message: 'Invalid credentials' });
     }
-  });
+  } catch (error) {
+    console.error('Error during login:', error);
+    res.status(500).send({ success: false, message: 'Login failed Server error', error: error.message });
+  }
+});
   
 // Define Item Schema and Model
 const ItemSchema = new mongoose.Schema({
@@ -72,13 +73,13 @@ app.post('/items', async (req, res) => {
   try {
     const { name, amount, product, image, date, time } = req.body;
 
-    // Проверка, существует ли уже элемент с таким же именем
+    // Check if item with the same name already exists
     const existingItem = await Item.findOne({ name });
     if (existingItem) {
       return res.status(400).send({ success: false, message: 'Item with this name already exists' });
     }
 
-    // Создание и сохранение нового элемента
+    // Create and save new item
     const newItem = new Item({ name, amount, product, image, date, time });
     await newItem.save();
     res.status(201).send({ success: true, message: 'Item added successfully' });
@@ -88,9 +89,27 @@ app.post('/items', async (req, res) => {
   }
 });
 
+// New PUT endpoint for updating an item
+app.put('/items/:id', async (req, res) => {
+  const { id } = req.params;
+  const updatedData = req.body;
+  
+  try {
+    // Find the item by ID and update it with the new data
+    const updatedItem = await Item.findByIdAndUpdate(id, updatedData, { new: true, runValidators: true });
 
+    if (!updatedItem) {
+      return res.status(404).send({ success: false, message: 'Item not found' });
+    }
 
-// New delete endpoint
+    res.status(200).send({ success: true, message: 'Item updated successfully', item: updatedItem });
+  } catch (error) {
+    console.error('Error updating item:', error);
+    res.status(500).send({ success: false, message: 'Server error', error: error.message });
+  }
+});
+
+// New DELETE endpoint for deleting an item
 app.delete('/items/:_id', async (req, res) => {
   const { _id } = req.params;
   try {
