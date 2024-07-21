@@ -47,11 +47,13 @@ mongoose.connect('mongodb+srv://maxmudibragimov19771908:PjZDIr1LX1ZGDh6a@cluster
   
 // Define Item Schema and Model
 const ItemSchema = new mongoose.Schema({
-  name: String,
-  amount: String,
-  product: String,
+  name: { type: String, required: true },
+  amount: { type: String, required: true },
+  product: { type: String },
+  date: { type: String, required: true },
+  time: { type: String, required: true },
+  image: { type: String }
 });
-
 const Item = mongoose.model('Item', ItemSchema);
 
 // Existing routes...
@@ -68,7 +70,16 @@ app.get('/items', async (req, res) => {
 
 app.post('/items', async (req, res) => {
   try {
-    const newItem = new Item(req.body);
+    const { name, amount, product, image, date, time } = req.body;
+
+    // Проверка, существует ли уже элемент с таким же именем
+    const existingItem = await Item.findOne({ name });
+    if (existingItem) {
+      return res.status(400).send({ success: false, message: 'Item with this name already exists' });
+    }
+
+    // Создание и сохранение нового элемента
+    const newItem = new Item({ name, amount, product, image, date, time });
     await newItem.save();
     res.status(201).send({ success: true, message: 'Item added successfully' });
   } catch (error) {
@@ -76,6 +87,8 @@ app.post('/items', async (req, res) => {
     res.status(500).send({ success: false, message: 'Server error', error: error.message });
   }
 });
+
+
 
 // New delete endpoint
 app.delete('/items/:_id', async (req, res) => {
